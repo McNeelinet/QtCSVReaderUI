@@ -19,6 +19,8 @@ set(PROJECT_SOURCES
         mainwindow.ui
         csvreader.h
         csvreader.cpp
+        tablemanager.h
+        tablemanager.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

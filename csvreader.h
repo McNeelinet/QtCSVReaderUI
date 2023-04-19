@@ -8,7 +8,8 @@ struct CSVReader
 {
     std::string filename;
     std::ifstream file;
-    int columns;
+    int columnsCount;
+    int regionColumn;
 };
 
 struct CSVHelperOutput
@@ -17,12 +18,19 @@ struct CSVHelperOutput
     bool status;
 };
 
+struct CSVHelperInput
+{
+    CSVReader* reader = nullptr;
+    std::vector<double> columnFloats;
+};
+
 enum ACTIONS {
     READER_ENABLE,
+    READER_RESET,
     READER_DISABLE,
     READER_GETROW
 };
 
-CSVHelperOutput CSVHelperFrontController(CSVReader& reader, int action);
+CSVHelperOutput CSVHelperFrontController(CSVHelperInput& input, int action);
 
 #endif // CSVREADER_H

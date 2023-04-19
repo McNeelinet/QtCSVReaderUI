@@ -15,6 +15,11 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void openFileDialog();
+    void loadData();
+    void calcMetrics();
+
 private:
     Ui::MainWindow *ui;
 };
