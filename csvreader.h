@@ -16,6 +16,7 @@ struct CSVHelperOutput
 {
     std::vector<std::string> row;
     bool status;
+    double metricResult;
 };
 
 struct CSVHelperInput
@@ -28,7 +29,10 @@ enum ACTIONS {
     READER_ENABLE,
     READER_RESET,
     READER_DISABLE,
-    READER_GETROW
+    READER_GETROW,
+    METRICS_MAXIMUM,
+    METRICS_MINIMUM,
+    METRICS_MEDIAN
 };
 
 CSVHelperOutput CSVHelperFrontController(CSVHelperInput& input, int action);

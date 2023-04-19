@@ -59,7 +59,7 @@ std::vector<double> TableGetColumnFloats(QTableWidget* table, QString columnNumb
         if (isDouble)
             columnF.push_back(number);
         else
-            throw std::runtime_error("Значение в колонке - не число");
+            throw std::runtime_error("Одно из значений в колонке - не число");
     }
 
     return columnF;

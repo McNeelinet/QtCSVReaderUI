@@ -41,6 +41,9 @@ void MainWindow::loadData()
     // Если количество рядов 0, то...
 
     this->ui->le_column->setEnabled(true);
+    this->ui->le_maximum->clear();
+    this->ui->le_minimum->clear();
+    this->ui->le_median->clear();
     this->ui->btn_calc_metrics->setEnabled(true);
     CSVHelperFrontController(input, READER_DISABLE);
 }
@@ -49,6 +52,26 @@ void MainWindow::calcMetrics()
 {
     std::vector<double> columnFloats = TableGetColumnFloats(this->ui->table_display, this->ui->le_column->text());
     CSVHelperInput input = {.columnFloats = columnFloats};
+
+    CSVHelperOutput output;
+
+    output = CSVHelperFrontController(input, METRICS_MAXIMUM);
+    if (output.status)
+        this->ui->le_maximum->setText(QString::number(output.metricResult));
+    else
+        this->ui->le_maximum->setText("Failure");
+
+    output = CSVHelperFrontController(input, METRICS_MINIMUM);
+    if (output.status)
+        this->ui->le_minimum->setText(QString::number(output.metricResult));
+    else
+        this->ui->le_minimum->setText("Failure");
+
+    output = CSVHelperFrontController(input, METRICS_MEDIAN);
+    if (output.status)
+        this->ui->le_median->setText(QString::number(output.metricResult));
+    else
+        this->ui->le_median->setText("Failure");
 }
 
 MainWindow::~MainWindow()

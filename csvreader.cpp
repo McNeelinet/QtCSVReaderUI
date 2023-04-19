@@ -3,6 +3,7 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 struct CSVReader
 {
@@ -16,6 +17,7 @@ struct CSVHelperOutput
 {
     std::vector<std::string> row;
     bool status;
+    double metricResult;
 };
 
 struct CSVHelperInput
@@ -125,30 +127,81 @@ void CSVReaderGetRow(CSVReader& reader, CSVHelperOutput& output)
     }
 }
 
+void MetricsCalcMaximum(std::vector<double> values, CSVHelperOutput& output)
+{
+    if (!values.empty()) {
+        output.metricResult = values[0];
+
+        int size = values.size();
+        for (int i = 0; i <= size - 1; i++)
+            if (values[i] > output.metricResult)
+                output.metricResult = values[i];
+
+        output.status = true;
+    }
+}
+
+void MetricsCalcMinimum(std::vector<double> values, CSVHelperOutput& output)
+{
+    if (!values.empty()) {
+        output.metricResult = values[0];
+
+        int size = values.size();
+        for (int i = 0; i <= size - 1; i++)
+            if (values[i] < output.metricResult)
+                output.metricResult = values[i];
+
+        output.status = true;
+    }
+}
+
+void sortVector(std::vector<double>& vector, int size)
+{
+    for (int i = 0; i < size - 1; i++)
+        for (int j = 0; j < size - i - 1; j++)
+            if (vector[j] > vector[j + 1]) {
+                int temp = vector[j];
+                vector[j] = vector[j + 1];
+                vector[j + 1] = temp;
+            }
+}
+
+void MetricsCalcMedian(std::vector<double> values, CSVHelperOutput& output)
+{
+    if (!values.empty()) {
+        output.metricResult = values[0];
+
+        sortVector(values, values.size());
+
+        if (values.size() % 2 == 1)
+            output.metricResult = values[values.size() / 2];
+        else
+            output.metricResult = (values[values.size() / 2 - 1] + values[values.size() / 2]) / 2;
+
+        output.status = true;
+    }
+}
+
 CSVHelperOutput CSVHelperFrontController(CSVHelperInput& input, int action)
 {
     CSVHelperOutput output = {.status = false};
 
-    switch (action) {
-    case ACTIONS::READER_ENABLE:
-        if (input.reader != nullptr)
-            CSVReaderEnable(*(input.reader), output);
-        break;
-    case ACTIONS::READER_RESET:
-        if (input.reader != nullptr)
-            CSVReaderReset(*(input.reader), output);
-        break;
-    case ACTIONS::READER_DISABLE:
-        if (input.reader != nullptr)
-            CSVReaderDisable(*(input.reader), output);
-        break;
-    case ACTIONS::READER_GETROW:
-        if (input.reader != nullptr)
-            CSVReaderGetRow(*(input.reader), output);
-        break;
-    default:
+    if (action == ACTIONS::READER_ENABLE)
+        CSVReaderEnable(*(input.reader), output);
+    else if (action == ACTIONS::READER_RESET)
+        CSVReaderReset(*(input.reader), output);
+    else if (action == ACTIONS::READER_DISABLE)
+        CSVReaderDisable(*(input.reader), output);
+    else if (action == ACTIONS::READER_GETROW)
+        CSVReaderGetRow(*(input.reader), output);
+    else if (action == ACTIONS::METRICS_MAXIMUM)
+        MetricsCalcMaximum(input.columnFloats, output);
+    else if (action == ACTIONS::METRICS_MINIMUM)
+        MetricsCalcMinimum(input.columnFloats, output);
+    else if (action == ACTIONS::METRICS_MEDIAN)
+        MetricsCalcMedian(input.columnFloats, output);
+    else
         throw std::runtime_error("Неизвестное действие");
-    }
 
     return output;
 }
