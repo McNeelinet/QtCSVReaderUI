@@ -3,7 +3,6 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
-#include <iostream>
 
 struct CSVReader
 {
@@ -27,13 +26,13 @@ struct CSVHelperInput
 };
 
 enum ACTIONS {
+    METRICS_MAXIMUM,
+    METRICS_MINIMUM,
+    METRICS_MEDIAN,
     READER_ENABLE,
     READER_RESET,
     READER_DISABLE,
-    READER_GETROW,
-    METRICS_MAXIMUM,
-    METRICS_MINIMUM,
-    METRICS_MEDIAN
+    READER_GETROW
 };
 
 
@@ -99,7 +98,8 @@ void CSVReaderReset(CSVReader& reader, CSVHelperOutput& output)
 
 void CSVReaderDisable(CSVReader& reader, CSVHelperOutput& output)
 {
-    reader.file.close();
+    if (reader.file.is_open())
+        reader.file.close();
     output.status = true;
 }
 
@@ -109,7 +109,8 @@ void CSVReaderGetRow(CSVReader& reader, CSVHelperOutput& output)
         throw std::runtime_error("Файл не был открыт");
 
     std::string line;
-    if (std::getline(reader.file, line)) { // не факт, что ошибка чтения - это конец файла
+
+    if (std::getline(reader.file, line)) {
         if (findColumnsCount(line) != reader.columnsCount)
             throw std::runtime_error("Поврежденный файл");
 

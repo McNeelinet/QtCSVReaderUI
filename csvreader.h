@@ -26,13 +26,13 @@ struct CSVHelperInput
 };
 
 enum ACTIONS {
+    METRICS_MAXIMUM,
+    METRICS_MINIMUM,
+    METRICS_MEDIAN,
     READER_ENABLE,
     READER_RESET,
     READER_DISABLE,
-    READER_GETROW,
-    METRICS_MAXIMUM,
-    METRICS_MINIMUM,
-    METRICS_MEDIAN
+    READER_GETROW
 };
 
 CSVHelperOutput CSVHelperFrontController(CSVHelperInput& input, int action);

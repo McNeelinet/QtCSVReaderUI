@@ -3,18 +3,11 @@
 #include <QTableWidget>
 #include <QString>
 #include <vector>
-#include <stdexcept>
 #include "csvreader.h"
-
 
 void TableClear(QTableWidget* table)
 {
     table->setRowCount(0);
-}
-
-void TableDelete(QTableWidget* table)
-{
-    TableClear(table);
     table->horizontalHeader()->hide();
 }
 

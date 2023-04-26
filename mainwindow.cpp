@@ -2,7 +2,9 @@
 #include "./ui_mainwindow.h"
 #include "csvreader.h"
 #include "tablemanager.h"
+#include <QMessageBox>
 #include <QFileDialog>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -23,9 +25,13 @@ void MainWindow::openFileDialog()
         this->ui->le_filename->setText(filename);
         this->ui->le_region->setEnabled(true);
         this->ui->btn_load_data->setEnabled(true);
+        this->ui->le_column->clear();
         this->ui->le_column->setEnabled(false);
         this->ui->btn_calc_metrics->setEnabled(false);
-        TableDelete(this->ui->table_display);
+        this->ui->le_maximum->clear();
+        this->ui->le_minimum->clear();
+        this->ui->le_median->clear();
+        TableClear(this->ui->table_display);
     }
 }
 
@@ -33,45 +39,52 @@ void MainWindow::loadData()
 {
     CSVReader reader = {.filename = this->ui->le_filename->text().toStdString()};
     CSVHelperInput input = {.reader = &reader};
-    CSVHelperFrontController(input, READER_ENABLE);
+    TableClear(this->ui->table_display);
+    bool success = true;
 
-    TableClear(ui->table_display);
-    TableFill(ui->table_display, reader, this->ui->le_region->text().toStdString());
+    try {
+        CSVHelperFrontController(input, READER_ENABLE);
+        TableFill(this->ui->table_display, reader, this->ui->le_region->text().toStdString());
+    }
+    catch(std::runtime_error& e) {
+        TableClear(this->ui->table_display);
+        QMessageBox::critical(this, "Ошибка чтения", e.what());
+        success = false;
+    }
 
-    // Если количество рядов 0, то...
-
-    this->ui->le_column->setEnabled(true);
+    this->ui->le_column->setEnabled(success);
+    this->ui->btn_calc_metrics->setEnabled(success);
+    this->ui->le_column->clear();
     this->ui->le_maximum->clear();
     this->ui->le_minimum->clear();
     this->ui->le_median->clear();
-    this->ui->btn_calc_metrics->setEnabled(true);
+
     CSVHelperFrontController(input, READER_DISABLE);
 }
 
 void MainWindow::calcMetrics()
 {
-    std::vector<double> columnFloats = TableGetColumnFloats(this->ui->table_display, this->ui->le_column->text());
-    CSVHelperInput input = {.columnFloats = columnFloats};
-
+    CSVHelperInput input;
     CSVHelperOutput output;
+    bool success = true;
 
-    output = CSVHelperFrontController(input, METRICS_MAXIMUM);
-    if (output.status)
-        this->ui->le_maximum->setText(QString::number(output.metricResult));
-    else
-        this->ui->le_maximum->setText("Failure");
+    try {
+        std::vector<double> columnFloats = TableGetColumnFloats(this->ui->table_display, this->ui->le_column->text());
+        input = {.columnFloats = columnFloats};
+    }
+    catch (std::exception& e) {
+        QMessageBox::critical(this, "Расчет не удался", e.what());
+        success = false;
+    }
 
-    output = CSVHelperFrontController(input, METRICS_MINIMUM);
-    if (output.status)
-        this->ui->le_minimum->setText(QString::number(output.metricResult));
-    else
-        this->ui->le_minimum->setText("Failure");
-
-    output = CSVHelperFrontController(input, METRICS_MEDIAN);
-    if (output.status)
-        this->ui->le_median->setText(QString::number(output.metricResult));
-    else
-        this->ui->le_median->setText("Failure");
+    for (int i : std::vector<int>{METRICS_MAXIMUM, METRICS_MINIMUM, METRICS_MEDIAN}) {
+        output = CSVHelperFrontController(input, i);
+        QLineEdit* le = qobject_cast<QLineEdit*>(this->ui->hl_results->itemAt(i)->widget());
+        if (output.status)
+            le->setText(QString::number(output.metricResult));
+        else
+            le->setText("Failure");
+    }
 }
 
 MainWindow::~MainWindow()
