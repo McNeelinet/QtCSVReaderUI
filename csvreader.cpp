@@ -4,25 +4,19 @@
 #include <vector>
 #include <algorithm>
 
-struct CSVReader
+struct FileInfo
 {
     std::string filename;
     std::ifstream file;
-    int columnsCount;
-    int regionColumn;
+    int columns;
+    int colRegNumber;
 };
 
-struct CSVHelperOutput
+struct IOData
 {
-    std::vector<std::string> row;
-    bool status;
+    std::vector<std::string> rowValues;
+    std::vector<double> rowDoubleValues;
     double metricResult;
-};
-
-struct CSVHelperInput
-{
-    CSVReader* reader = nullptr;
-    std::vector<double> columnFloats;
 };
 
 enum ACTIONS {
@@ -36,6 +30,7 @@ enum ACTIONS {
 };
 
 
+////
 int findColumnsCount(std::string line)
 {
     return std::count(line.cbegin(), line.cend(), ',') + 1;
@@ -73,89 +68,6 @@ std::string trimString(std::string string)
     return std::string(start, end + 1);
 }
 
-void CSVReaderEnable(CSVReader& reader, CSVHelperOutput& output)
-{
-    reader.file.open(reader.filename);
-    if (!reader.file.is_open())
-        throw std::runtime_error("Файл не открылся");
-
-    std::string line;
-    if (!std::getline(reader.file, line))
-        throw std::runtime_error("Файл пуст");
-
-    reader.columnsCount = findColumnsCount(line);
-    reader.regionColumn = findRegionColumn(line);
-
-    reader.file.seekg(0);
-    output.status = true;
-}
-
-void CSVReaderReset(CSVReader& reader, CSVHelperOutput& output)
-{
-    reader.file.seekg(0);
-    output.status = true;
-}
-
-void CSVReaderDisable(CSVReader& reader, CSVHelperOutput& output)
-{
-    if (reader.file.is_open())
-        reader.file.close();
-    output.status = true;
-}
-
-void CSVReaderGetRow(CSVReader& reader, CSVHelperOutput& output)
-{
-    if (!reader.file.is_open())
-        throw std::runtime_error("Файл не был открыт");
-
-    std::string line;
-
-    if (std::getline(reader.file, line)) {
-        if (findColumnsCount(line) != reader.columnsCount)
-            throw std::runtime_error("Поврежденный файл");
-
-        std::stringstream lineStream(line);
-        std::vector<std::string> lineArray(reader.columnsCount);
-        for (int i = 0; i <= reader.columnsCount - 1; i++) {
-            std::string temp;
-            std::getline(lineStream, temp, ',');
-            temp = trimString(temp);
-            lineArray[i] = temp;
-        }
-
-        output.row = lineArray;
-        output.status = true;
-    }
-}
-
-void MetricsCalcMaximum(std::vector<double> values, CSVHelperOutput& output)
-{
-    if (!values.empty()) {
-        output.metricResult = values[0];
-
-        int size = values.size();
-        for (int i = 0; i <= size - 1; i++)
-            if (values[i] > output.metricResult)
-                output.metricResult = values[i];
-
-        output.status = true;
-    }
-}
-
-void MetricsCalcMinimum(std::vector<double> values, CSVHelperOutput& output)
-{
-    if (!values.empty()) {
-        output.metricResult = values[0];
-
-        int size = values.size();
-        for (int i = 0; i <= size - 1; i++)
-            if (values[i] < output.metricResult)
-                output.metricResult = values[i];
-
-        output.status = true;
-    }
-}
-
 void sortVector(std::vector<double>& vector, int size)
 {
     for (int i = 0; i < size - 1; i++)
@@ -166,43 +78,142 @@ void sortVector(std::vector<double>& vector, int size)
                 vector[j + 1] = temp;
             }
 }
+////
 
-void MetricsCalcMedian(std::vector<double> values, CSVHelperOutput& output)
+bool CSVReaderEnable(FileInfo& fi)
 {
-    if (!values.empty()) {
-        output.metricResult = values[0];
+    fi.file.open(fi.filename);
+    if (!fi.file.is_open())
+        throw std::runtime_error("Не удалось открыть файл.");
 
+    std::string line;
+    if (!std::getline(fi.file, line))
+        throw std::runtime_error("Не удалось прочитать файл.");
+
+    fi.columns = findColumnsCount(line);
+    fi.colRegNumber = findRegionColumn(line);
+
+    fi.file.seekg(0);
+    return true;
+}
+
+bool CSVReaderReset(FileInfo& fi)
+{
+    fi.file.seekg(0);
+    return true;
+}
+
+bool CSVReaderDisable(FileInfo& fi)
+{
+    if (fi.file.is_open())
+        fi.file.close();
+    return true;
+}
+
+bool CSVReaderGetRow(FileInfo& fi, IOData& io)
+{
+    if (!fi.file.is_open())
+        throw std::runtime_error("Файл не был открыт");
+
+    std::string line;
+    if (std::getline(fi.file, line)) {
+        if (findColumnsCount(line) != fi.columns)
+            throw std::runtime_error("Поврежденный файл");
+
+        std::stringstream lineStream(line);
+        std::vector<std::string> lineArray(fi.columns);
+        for (int i = 0; i <= fi.columns - 1; i++) {
+            std::string temp;
+            std::getline(lineStream, temp, ',');
+            temp = trimString(temp);
+            lineArray[i] = temp;
+        }
+
+        io.rowValues = lineArray;
+        return true;
+    }
+
+    return false;
+}
+
+bool MetricsCalcMaximum(IOData& io)
+{
+    std::vector<double>& values = io.rowDoubleValues;
+    double& result = io.metricResult;
+
+    if (!values.empty()) {
+        result = values[0];
+
+        int size = values.size();
+        for (int i = 0; i <= size - 1; i++)
+            if (values[i] > result)
+                result = values[i];
+
+        return true;
+    }
+
+    return false;
+}
+
+bool MetricsCalcMinimum(IOData& io)
+{
+    std::vector<double>& values = io.rowDoubleValues;
+    double& result = io.metricResult;
+
+    if (!values.empty()) {
+        result = values[0];
+
+        int size = values.size();
+        for (int i = 0; i <= size - 1; i++)
+            if (values[i] < result)
+                result = values[i];
+
+        return true;
+    }
+
+    return false;
+}
+
+bool MetricsCalcMedian(IOData& io)
+{
+    std::vector<double>& values = io.rowDoubleValues;
+    double& result = io.metricResult;
+
+    if (!values.empty()) {
+        result = values[0];
         sortVector(values, values.size());
 
         if (values.size() % 2 == 1)
-            output.metricResult = values[values.size() / 2];
+            result = values[values.size() / 2];
         else
-            output.metricResult = (values[values.size() / 2 - 1] + values[values.size() / 2]) / 2;
+            result = (values[values.size() / 2 - 1] + values[values.size() / 2]) / 2;
 
-        output.status = true;
+        return true;
     }
+
+    return true;
 }
 
-CSVHelperOutput CSVHelperFrontController(CSVHelperInput& input, int action)
+bool CSVHelperFrontController(int action, FileInfo* fi = nullptr, IOData* io = nullptr)
 {
-    CSVHelperOutput output = {.status = false};
+    bool status = false;
 
-    if (action == ACTIONS::READER_ENABLE)
-        CSVReaderEnable(*(input.reader), output);
-    else if (action == ACTIONS::READER_RESET)
-        CSVReaderReset(*(input.reader), output);
-    else if (action == ACTIONS::READER_DISABLE)
-        CSVReaderDisable(*(input.reader), output);
-    else if (action == ACTIONS::READER_GETROW)
-        CSVReaderGetRow(*(input.reader), output);
-    else if (action == ACTIONS::METRICS_MAXIMUM)
-        MetricsCalcMaximum(input.columnFloats, output);
-    else if (action == ACTIONS::METRICS_MINIMUM)
-        MetricsCalcMinimum(input.columnFloats, output);
-    else if (action == ACTIONS::METRICS_MEDIAN)
-        MetricsCalcMedian(input.columnFloats, output);
+    if (action == READER_ENABLE)
+        status = CSVReaderEnable(*fi);
+    else if (action == READER_RESET)
+        status = CSVReaderReset(*fi);
+    else if (action == READER_DISABLE)
+        status = CSVReaderDisable(*fi);
+    else if (action == READER_GETROW)
+        status = CSVReaderGetRow(*fi, *io);
+    else if (action == METRICS_MAXIMUM)
+        status = MetricsCalcMaximum(*io);
+    else if (action == METRICS_MINIMUM)
+        status = MetricsCalcMinimum(*io);
+    else if (action == METRICS_MEDIAN)
+        status = MetricsCalcMedian(*io);
     else
-        throw std::runtime_error("Неизвестное действие");
+        throw std::runtime_error("Не удается выполнить операцию.");
 
-    return output;
+    return status;
 }

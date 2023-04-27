@@ -11,31 +11,32 @@ void TableClear(QTableWidget* table)
     table->horizontalHeader()->hide();
 }
 
-void TableFill(QTableWidget* table, CSVReader& reader, std::string region)
+void TableFill(QTableWidget* table, FileInfo* fileinfo, std::string region)
 {
-    CSVHelperInput input = {.reader = &reader};
-    CSVHelperFrontController(input, READER_RESET);
-    CSVHelperOutput output = CSVHelperFrontController(input, READER_GETROW);
+    IOData io;
+    FileInfo& fi = *fileinfo;
+    CSVHelperFrontController(READER_RESET, &fi);
+    CSVHelperFrontController(READER_GETROW, &fi, &io);
 
-    table->setColumnCount(reader.columnsCount);
-    for (int i = 0; i <= reader.columnsCount - 1; i++)
-        table->setHorizontalHeaderItem(i, new QTableWidgetItem(QString::fromStdString(output.row[i]), 0));
+    table->setColumnCount(fi.columns);
+    for (int i = 0; i <= fi.columns - 1; i++)
+        table->setHorizontalHeaderItem(i, new QTableWidgetItem(QString::fromStdString(io.rowValues[i]), 0));
     table->horizontalHeader()->show();
 
-    while ((output = CSVHelperFrontController(input, READER_GETROW)).status) {
-        if (output.row[reader.regionColumn] != region)
+    while (CSVHelperFrontController(READER_GETROW, &fi, &io)) {
+        if (io.rowValues[fi.colRegNumber] != region)
             continue;
 
         table->insertRow(table->rowCount());
-        for (int i = 0; i < reader.columnsCount; i++)
-            table->setItem(table->rowCount() - 1, i, new QTableWidgetItem(QString::fromStdString(output.row[i])));
+        for (int i = 0; i < fi.columns; i++)
+            table->setItem(table->rowCount() - 1, i, new QTableWidgetItem(QString::fromStdString(io.rowValues[i])));
     }
 }
 
-std::vector<double> TableGetColumnFloats(QTableWidget* table, QString columnNumberString)
+void TableGetColumnFloats(QTableWidget* table, IOData* inputoutput, QString column)
 {
     bool isInt;
-    int columnNumber = columnNumberString.toInt(&isInt);
+    int columnNumber = column.toInt(&isInt);
     if (!isInt)
         throw std::runtime_error("Номер колонки - не число");
 
@@ -47,13 +48,10 @@ std::vector<double> TableGetColumnFloats(QTableWidget* table, QString columnNumb
     std::vector<double> columnF;
     for (int i = 0; i <= rowCount - 1; i++) {
         bool isDouble;
-        QString elemText = table->item(i, columnNumber)->text();
-        double number = elemText.toDouble(&isDouble);
+        double number = table->item(i, columnNumber)->text().toDouble(&isDouble);
         if (isDouble)
             columnF.push_back(number);
-        else
-            throw std::runtime_error("Одно из значений в колонке - не число");
     }
 
-    return columnF;
+    inputoutput->rowDoubleValues = columnF;
 }

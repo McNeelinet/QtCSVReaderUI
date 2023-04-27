@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-#include "csvreader.h"
 #include "tablemanager.h"
 #include <QMessageBox>
 #include <QFileDialog>
@@ -37,14 +36,13 @@ void MainWindow::openFileDialog()
 
 void MainWindow::loadData()
 {
-    CSVReader reader = {.filename = this->ui->le_filename->text().toStdString()};
-    CSVHelperInput input = {.reader = &reader};
+    FileInfo fi = {.filename = this->ui->le_filename->text().toStdString()};
     TableClear(this->ui->table_display);
     bool success = true;
 
     try {
-        CSVHelperFrontController(input, READER_ENABLE);
-        TableFill(this->ui->table_display, reader, this->ui->le_region->text().toStdString());
+        CSVHelperFrontController(READER_ENABLE, &fi);
+        TableFill(this->ui->table_display, &fi, this->ui->le_region->text().toStdString());
     }
     catch(std::runtime_error& e) {
         TableClear(this->ui->table_display);
@@ -59,29 +57,24 @@ void MainWindow::loadData()
     this->ui->le_minimum->clear();
     this->ui->le_median->clear();
 
-    CSVHelperFrontController(input, READER_DISABLE);
+    CSVHelperFrontController(READER_DISABLE, &fi);
 }
 
 void MainWindow::calcMetrics()
 {
-    CSVHelperInput input;
-    CSVHelperOutput output;
-    bool success = true;
+    IOData io;
 
     try {
-        std::vector<double> columnFloats = TableGetColumnFloats(this->ui->table_display, this->ui->le_column->text());
-        input = {.columnFloats = columnFloats};
+        TableGetColumnFloats(this->ui->table_display, &io,  this->ui->le_column->text());
     }
     catch (std::exception& e) {
         QMessageBox::critical(this, "Расчет не удался", e.what());
-        success = false;
     }
 
     for (int i : std::vector<int>{METRICS_MAXIMUM, METRICS_MINIMUM, METRICS_MEDIAN}) {
-        output = CSVHelperFrontController(input, i);
         QLineEdit* le = qobject_cast<QLineEdit*>(this->ui->hl_results->itemAt(i)->widget());
-        if (output.status)
-            le->setText(QString::number(output.metricResult));
+        if (CSVHelperFrontController(i, nullptr, &io))
+            le->setText(QString::number(io.metricResult));
         else
             le->setText("Failure");
     }

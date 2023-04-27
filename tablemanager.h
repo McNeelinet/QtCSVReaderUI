@@ -6,7 +6,7 @@
 
 void TableClear(QTableWidget* table);
 void TableDelete(QTableWidget* table);
-void TableFill(QTableWidget* table, CSVReader& reader, std::string region);
-std::vector<double> TableGetColumnFloats(QTableWidget* table, QString column);
+void TableFill(QTableWidget* table, FileInfo* fi, std::string region);
+void TableGetColumnFloats(QTableWidget* table, IOData* io, QString column);
 
 #endif // TABLEMANAGER_H

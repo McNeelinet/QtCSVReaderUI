@@ -4,25 +4,19 @@
 #include <fstream>
 #include <vector>
 
-struct CSVReader
+struct FileInfo
 {
     std::string filename;
     std::ifstream file;
-    int columnsCount;
-    int regionColumn;
+    int columns;
+    int colRegNumber;
 };
 
-struct CSVHelperOutput
+struct IOData
 {
-    std::vector<std::string> row;
-    bool status;
+    std::vector<std::string> rowValues;
+    std::vector<double> rowDoubleValues;
     double metricResult;
-};
-
-struct CSVHelperInput
-{
-    CSVReader* reader = nullptr;
-    std::vector<double> columnFloats;
 };
 
 enum ACTIONS {
@@ -35,6 +29,6 @@ enum ACTIONS {
     READER_GETROW
 };
 
-CSVHelperOutput CSVHelperFrontController(CSVHelperInput& input, int action);
+bool CSVHelperFrontController(int action, FileInfo* = nullptr, IOData* = nullptr);
 
 #endif // CSVREADER_H
