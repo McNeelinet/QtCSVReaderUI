@@ -20,7 +20,7 @@ void TableFill(QTableWidget* table, FileInfo* fileinfo, std::string region)
 
     table->setColumnCount(fi.columns);
     for (int i = 0; i <= fi.columns - 1; i++)
-        table->setHorizontalHeaderItem(i, new QTableWidgetItem(QString::fromStdString(io.rowValues[i]), 0));
+        table->setHorizontalHeaderItem(i, new QTableWidgetItem(QString::number(i), 0));
     table->horizontalHeader()->show();
 
     while (CSVHelperFrontController(READER_GETROW, &fi, &io)) {

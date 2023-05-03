@@ -19,6 +19,7 @@ private slots:
     void openFileDialog();
     void loadData();
     void calcMetrics();
+    void clearMetrics();
 
 private:
     Ui::MainWindow *ui;

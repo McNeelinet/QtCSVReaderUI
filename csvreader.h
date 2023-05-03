@@ -1,6 +1,5 @@
 #ifndef CSVREADER_H
 #define CSVREADER_H
-#include <iostream>
 #include <fstream>
 #include <vector>
 

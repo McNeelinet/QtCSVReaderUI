@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btn_open_file, SIGNAL(clicked()), this, SLOT(openFileDialog()));
     connect(ui->btn_load_data, SIGNAL(clicked()), this, SLOT(loadData()));
     connect(ui->btn_calc_metrics, SIGNAL(clicked()), this, SLOT(calcMetrics()));
+    connect(ui->le_column, SIGNAL(textChanged(QString)), this, SLOT(clearMetrics()));
 }
 
 void MainWindow::openFileDialog()
@@ -76,8 +77,15 @@ void MainWindow::calcMetrics()
         if (CSVHelperFrontController(i, nullptr, &io))
             le->setText(QString::number(io.metricResult));
         else
-            le->setText("Failure");
+            le->clear();
     }
+}
+
+void MainWindow::clearMetrics()
+{
+    this->ui->le_maximum->clear();
+    this->ui->le_minimum->clear();
+    this->ui->le_median->clear();
 }
 
 MainWindow::~MainWindow()

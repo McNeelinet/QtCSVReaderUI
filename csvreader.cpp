@@ -191,26 +191,26 @@ bool MetricsCalcMedian(IOData& io)
         return true;
     }
 
-    return true;
+    return false;
 }
 
 bool CSVHelperFrontController(int action, FileInfo* fi = nullptr, IOData* io = nullptr)
 {
     bool status = false;
 
-    if (action == READER_ENABLE)
+    if (action == READER_ENABLE && !(fi == nullptr))
         status = CSVReaderEnable(*fi);
-    else if (action == READER_RESET)
+    else if (action == READER_RESET && !(fi == nullptr))
         status = CSVReaderReset(*fi);
-    else if (action == READER_DISABLE)
+    else if (action == READER_DISABLE && !(fi == nullptr))
         status = CSVReaderDisable(*fi);
-    else if (action == READER_GETROW)
+    else if (action == READER_GETROW && !(fi == nullptr) && !(io == nullptr))
         status = CSVReaderGetRow(*fi, *io);
-    else if (action == METRICS_MAXIMUM)
+    else if (action == METRICS_MAXIMUM && !(io == nullptr))
         status = MetricsCalcMaximum(*io);
-    else if (action == METRICS_MINIMUM)
+    else if (action == METRICS_MINIMUM && !(io == nullptr))
         status = MetricsCalcMinimum(*io);
-    else if (action == METRICS_MEDIAN)
+    else if (action == METRICS_MEDIAN && !(io == nullptr))
         status = MetricsCalcMedian(*io);
     else
         throw std::runtime_error("Не удается выполнить операцию.");
